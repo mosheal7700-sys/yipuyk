@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ייפוי כוח מתמשך - טופס סופי</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <title>ייפוי כוח מתמשך</title>
     <style>
+        /* === תיקון קריטי: חישוב רוחב כולל מסגרות === */
+        * { box-sizing: border-box; }
+
+        /* --- הגדרות כלליות (מסך) --- */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f4f4f4;
@@ -14,13 +17,15 @@
             padding: 20px;
         }
         .container {
-            max-width: 210mm;
+            max-width: 210mm; /* רוחב A4 */
             margin: 0 auto;
             background: white;
             padding: 40px;
             box-shadow: 0 0 15px rgba(0,0,0,0.1);
             min-height: 297mm;
         }
+        
+        /* כותרות ועיצוב */
         h1, h2, h3 { text-align: center; color: #2c3e50; }
         h1 { margin-bottom: 5px; font-size: 24px; }
         h2 { margin-top: 0; font-size: 18px; color: #555; }
@@ -31,7 +36,9 @@
             padding: 20px;
             border-radius: 5px;
             position: relative;
+            background-color: #fff;
         }
+        
         .section-title {
             font-weight: bold;
             font-size: 18px;
@@ -40,8 +47,8 @@
             padding-bottom: 5px;
             color: #3498db;
         }
-        
-        /* עיצוב להערות האדומות */
+
+        /* --- הערות אדומות (יוסתרו בהדפסה) --- */
         .instruction-note {
             color: #c0392b;
             font-size: 13px;
@@ -53,49 +60,129 @@
             display: block;
         }
 
-        .form-row { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; }
+        /* --- שדות טופס --- */
+        .form-row { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 10px; }
         .form-group { flex: 1; min-width: 150px; }
+        label { display: block; margin-bottom: 3px; font-weight: bold; font-size: 14px; }
         
-        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
         input[type="text"], input[type="number"], input[type="date"], input[type="email"], select, textarea {
-            width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit;
+            width: 100%; 
+            padding: 4px 8px;
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            font-family: inherit; 
+            font-size: 14px;
+            background: #fff;
+            line-height: 1.3;
         }
-        textarea { resize: vertical; min-height: 60px; }
+
+        /* שדות טקסט חכמים */
+        textarea { 
+            resize: none; 
+            min-height: 30px; 
+            overflow: hidden; 
+            height: auto;
+            padding-top: 6px;
+        }
         
-        table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: right; font-size: 13px; vertical-align: top; }
+        /* --- טבלאות --- */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        th, td { border: 1px solid #ddd; padding: 6px; text-align: right; font-size: 13px; vertical-align: top; }
         th { background-color: #f9f9f9; }
-        
-        .btn-add {
-            background-color: #3498db; color: white; border: none; padding: 5px 10px; 
-            border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 5px;
-        }
 
         .proxy-card {
             background: #f9f9f9; padding: 15px; border: 1px solid #e0e0e0; margin-bottom: 15px; border-radius: 4px;
         }
 
-        /* Signature Canvas */
+        /* --- חתימה --- */
         .signature-pad {
-            border: 2px dashed #bbb; background-color: #fff; width: 100%; height: 200px;
+            border: 2px dashed #bbb; background-color: #fff; width: 100%; height: 150px;
             touch-action: none; cursor: crosshair;
         }
+
+        /* --- כפתורים (יוסתרו בהדפסה) --- */
+        .btn-add {
+            background-color: #3498db; color: white; border: none; padding: 4px 8px; 
+            border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 5px;
+        }
+        .btn-clear { background-color: #e74c3c; color: white; font-size: 12px; padding: 5px 10px; border-radius: 4px; }
         
         .actions {
-            position: fixed; bottom: 20px; left: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 999;
+            position: fixed; bottom: 20px; left: 20px; z-index: 999;
         }
-        button.main-btn {
-            padding: 12px 24px; border: none; border-radius: 50px; cursor: pointer; font-weight: bold;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: transform 0.1s;
+        .btn-save { 
+            padding: 15px 30px; border: none; border-radius: 50px; cursor: pointer; font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); background-color: #27ae60; color: white; font-size: 16px;
         }
-        .btn-save { background-color: #27ae60; color: white; }
-        .btn-clear { background-color: #e74c3c; color: white; font-size: 12px; padding: 5px 10px; border-radius: 4px; }
+
+
+        /* ==========================================================================
+           @MEDIA PRINT - הדפסה
+           ========================================================================== */
+        @media print {
+            .no-print, .actions, .btn-add, .btn-clear, .instruction-note { 
+                display: none !important; 
+            }
+
+            @page {
+                size: A4;
+                margin: 10mm; 
+            }
+
+            body {
+                background-color: white;
+                padding: 0;
+                margin: 0;
+                -webkit-print-color-adjust: exact;
+                width: 100%;
+            }
+
+            .container {
+                width: 100%;
+                max-width: 100%;
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+                border: none;
+            }
+
+            table, .form-row {
+                width: 99%; 
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            input, select, textarea {
+                border: none !important;
+                border-bottom: 1px dotted #ccc !important;
+                background: transparent !important;
+                padding: 0 !important;
+                margin-bottom: 2px;
+                resize: none;
+                overflow: hidden;
+                min-height: 0;
+            }
+            
+            select { -webkit-appearance: none; appearance: none; }
+
+            .section, .proxy-card {
+                page-break-inside: avoid;
+                border: none;
+                padding: 0;
+                margin-bottom: 15px; 
+            }
+
+            table { page-break-inside: auto; }
+            tr { page-break-inside: avoid; }
+            
+            textarea { height: auto; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="actions" data-html2canvas-ignore="true">
-        <button class="main-btn btn-save" onclick="generatePDF()">שמור כ-PDF</button>
+    <div class="actions">
+        <button class="btn-save" onclick="printToPDF()">שמור כ-PDF (הדפסה)</button>
     </div>
 
     <div class="container" id="form-content">
@@ -140,29 +227,31 @@
                 <label>האם הילדים מאותו בן זוג?</label>
                 <select style="width: 100px;"><option value="">בחר...</option><option>כן</option><option>לא</option></select>
             </div>
-            <div class="instruction-note" data-html2canvas-ignore="true">
+            
+            <div class="instruction-note">
                 (אם יש ילדים מבני זוג שונים לוודא שאין סכסוכים בכדי למנוע התנגדויות)
             </div>
 
             <table id="childrenTable">
                 <thead>
-                    <tr><th>שם</th><th style="width: 40px;">גיל</th><th>מצב משפחתי</th><th>עיסוק</th><th style="width: 100px;">טלפון</th><th>דוא"ל</th></tr>
+                    <tr><th>שם</th><th style="width: 50px;">גיל</th><th>מצב משפחתי</th><th>עיסוק</th><th style="width: 130px;">טלפון</th><th>דוא"ל</th></tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td><input type="text"></td><td><input type="number"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text" style="text-align: center;"></td>
                         <td><select><option value="">בחר...</option><option>רווק</option><option>נשוי</option><option>גרוש</option><option>אלמן</option></select></td>
                         <td><input type="text"></td><td><input type="text"></td><td><input type="email"></td>
                     </tr>
                 </tbody>
             </table>
-            <button type="button" class="btn-add" onclick="addRow('childrenTable')" data-html2canvas-ignore="true">+ הוסף ילד</button>
+            <button type="button" class="btn-add" onclick="addRow('childrenTable')">+ הוסף ילד</button>
 
             <div class="form-group" style="margin-top: 15px;">
                 <label>עיסוק הממנה:</label>
                 <input type="text">
             </div>
-            <div class="instruction-note" data-html2canvas-ignore="true">
+            <div class="instruction-note">
                 (יש לבדוק שהממנה לא בעל עסק בעל חברה ואם כן לתת את הדעת על כך)
             </div>
         </div>
@@ -175,13 +264,13 @@
             </div>
             <div class="form-group">
                 <label>הנחיות לגבי מכירת דירה/נכסים:</label>
-                <textarea></textarea>
-                <div class="instruction-note" data-html2canvas-ignore="true">(לחקור את הממנה על נכסיו ומה ההנחיות שלו לגביהן.)</div>
+                <textarea oninput="autoGrow(this)"></textarea>
+                <div class="instruction-note">(לחקור את הממנה על נכסיו ומה ההנחיות שלו לגביהן.)</div>
             </div>
             <div class="form-group">
                 <label>הערות והסבר לגבי מכירת דירה:</label>
-                <textarea placeholder="פרט כאן סיבות, תנאים או נסיבות..."></textarea>
-                <div class="instruction-note" data-html2canvas-ignore="true">(כמובן להזכיר שלא ניתן למכור את הדירה ללא התערבות בימ"ש.)</div>
+                <textarea placeholder="פרט כאן..." oninput="autoGrow(this)"></textarea>
+                <div class="instruction-note">(כמובן להזכיר שלא ניתן למכור את הדירה ללא התערבות בימ"ש.)</div>
             </div>
 
             <label>חשבונות בנק:</label>
@@ -196,8 +285,8 @@
                     </tr>
                 </tbody>
             </table>
-            <button type="button" class="btn-add" onclick="addRow('bankTable')" data-html2canvas-ignore="true">+ הוסף חשבון</button>
-            <div class="instruction-note" data-html2canvas-ignore="true">חשוב לבדוק באיזה בנקים יש לממנה חשבונות... תמיד לרשום "ו/או כל בנק אחר".</div>
+            <button type="button" class="btn-add" onclick="addRow('bankTable')">+ הוסף חשבון</button>
+            <div class="instruction-note">חשוב לבדוק באיזה בנקים יש לממנה חשבונות... תמיד לרשום "ו/או כל בנק אחר".</div>
 
             <div class="form-row">
                 <div class="form-group"><label>האם להמשיך השקעות באופן סולידי?</label><select><option value="">בחר...</option><option>כן</option><option>לא</option></select></div>
@@ -205,13 +294,13 @@
             </div>
             <div class="form-group">
                 <label>הנחיות למתנות/הלוואות/תרומות:</label>
-                <textarea></textarea>
-                <div class="instruction-note" data-html2canvas-ignore="true">להזכיר שמתנות מעל 100 ש"ח דורשות אישור בימ"ש ללא הוראה מפורשת.</div>
+                <textarea oninput="autoGrow(this)"></textarea>
+                <div class="instruction-note">להזכיר שמתנות מעל 100 ש"ח דורשות אישור בימ"ש ללא הוראה מפורשת.</div>
             </div>
             <div class="form-group">
                 <label>מידע על חובות/תביעות/פשיטת רגל:</label>
-                <textarea></textarea>
-                <div class="instruction-note" data-html2canvas-ignore="true">ככל ויש - לצרף את שם העו"ד שמטפל, לכתב מה ההנחיות של הממנה לאותו מקרה...</div>
+                <textarea oninput="autoGrow(this)"></textarea>
+                <div class="instruction-note">ככל ויש - לצרף את שם העו"ד שמטפל, לכתב מה ההנחיות של הממנה לאותו מקרה...</div>
             </div>
             <div style="margin-top: 20px; background: #fdfefe; padding: 15px; border: 1px dashed #3498db; border-radius: 4px;">
                 <div class="form-row" style="align-items: center;">
@@ -234,8 +323,8 @@
                 <div><input type="checkbox"> ילד נכה</div><div><input type="checkbox"> נכות</div>
                 <div style="border-right: 2px solid #ddd; padding-right: 10px;"><strong>מיקום:</strong> <input type="checkbox"> בארץ <input type="checkbox"> בחו"ל</div>
             </div>
-            <div class="form-group"><label>הנחיות לקופת פנסיה וקצבאות:</label><textarea></textarea>
-                <div class="instruction-note" data-html2canvas-ignore="true">לקבל ממיופה הכוח הנחיות מה לעשות בקופת הפנסיה שלו והאם לפדות אותה ובאיזה תנאים</div>
+            <div class="form-group"><label>הנחיות לקופת פנסיה וקצבאות:</label><textarea oninput="autoGrow(this)"></textarea>
+                <div class="instruction-note">לקבל ממיופה הכוח הנחיות מה לעשות בקופת הפנסיה שלו והאם לפדות אותה ובאיזה תנאים</div>
             </div>
             <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
             <div class="form-row"><div class="form-group" style="flex:0 0 150px;"><label>2. יש לך רכב?</label><select><option value="">בחר...</option><option>כן</option><option>לא</option></select></div><div class="form-group"><label>אם כן, מה לעשות עם הרכב?</label><input type="text"></div></div>
@@ -246,8 +335,8 @@
                 <div class="form-group"><label>מתי נערך?</label><input type="date"></div>
             </div>
             <div class="form-row"><div class="form-group"><label>איפה הפקדת אותה?</label><input type="text"></div><div class="form-group"><label>הוראות קבורה?</label><select><option value="">בחר...</option><option>כן</option><option>לא</option></select></div></div>
-            <div class="form-group"><label>הערות והסברים נוספים:</label><textarea></textarea>
-                <div class="instruction-note" data-html2canvas-ignore="true">לוודא שאין סכסוכים, הדרה של ילד או השפעה בלתי הוגנת.</div>
+            <div class="form-group"><label>הערות והסברים נוספים:</label><textarea oninput="autoGrow(this)"></textarea>
+                <div class="instruction-note">לוודא שאין סכסוכים, הדרה של ילד או השפעה בלתי הוגנת.</div>
             </div>
             <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
             <div style="background: #f0f8ff; padding: 15px; border-radius: 5px;">
@@ -256,25 +345,25 @@
                     <div class="form-group"><label>ערכת ייפוי כוח רפואי?</label><select><option value="">בחר...</option><option>כן</option><option>לא</option></select></div>
                 </div>
                 <div class="form-row"><div class="form-group"><label>האם הפקדת אותו?</label><select><option value="">בחר...</option><option>כן</option><option>לא</option></select></div><div class="form-group"><label>תאריך:</label><input type="date"></div></div>
-                <div class="instruction-note" data-html2canvas-ignore="true">להסביר את המשמעות של הייפוי כוח הרפואי.</div>
+                <div class="instruction-note">להסביר את המשמעות של הייפוי כוח הרפואי.</div>
             </div>
         </div>
 
         <div class="section">
             <div class="section-title">5. עניינים אישיים</div>
-            <div class="instruction-note" data-html2canvas-ignore="true">הממנה לא תמיד יודע להסביר על הוראות ועניינים אישים - השאלות המנחות חשובות כאן.</div>
-            <div class="form-group"><label>מתי יחשב המצב כ"אי כשירות"?</label><textarea placeholder="הנחיות לעניין קביעת אי כשירות"></textarea></div>
-            <div class="form-group"><label>הרגלים חשובים וסדר יום:</label><textarea></textarea></div>
-            <div class="form-group"><label>העדפות מזון:</label><textarea></textarea></div>
-            <div class="form-group"><label>העדפות למגורים וטיפול:</label><textarea></textarea></div>
+            <div class="instruction-note">הממנה לא תמיד יודע להסביר על הוראות ועניינים אישים - השאלות המנחות חשובות כאן.</div>
+            <div class="form-group"><label>מתי יחשב המצב כ"אי כשירות"?</label><textarea placeholder="הנחיות לעניין קביעת אי כשירות" oninput="autoGrow(this)"></textarea></div>
+            <div class="form-group"><label>הרגלים חשובים וסדר יום:</label><textarea oninput="autoGrow(this)"></textarea></div>
+            <div class="form-group"><label>העדפות מזון:</label><textarea oninput="autoGrow(this)"></textarea></div>
+            <div class="form-group"><label>העדפות למגורים וטיפול:</label><textarea oninput="autoGrow(this)"></textarea></div>
             <div class="form-group" style="margin-top: 15px;"><label>האם יש לך רכוש מיוחד?</label><input type="text"></div>
-            <div class="form-group"><label>הנחיות מיוחדות לטיפול ברכוש זה:</label><textarea></textarea></div>
+            <div class="form-group"><label>הנחיות מיוחדות לטיפול ברכוש זה:</label><textarea oninput="autoGrow(this)"></textarea></div>
         </div>
 
         <div class="section">
             <div class="section-title">6. עניינים רפואיים</div>
             <div class="form-row"><div class="form-group"><label>קופת חולים:</label><input type="text"></div><div class="form-group"><label>רופא מטפל:</label><input type="text"></div></div>
-            <div class="form-group" style="margin-top: 15px;"><label>שיטות רפואיות מיוחדות:</label><textarea></textarea></div>
+            <div class="form-group" style="margin-top: 15px;"><label>שיטות רפואיות מיוחדות:</label><textarea oninput="autoGrow(this)"></textarea></div>
             <label style="margin-top: 20px;">הסכמה לטיפולים רפואיים:</label>
             <table>
                 <thead><tr><th>טיפול</th><th style="width: 80px; text-align: center;">מסכים</th><th style="width: 80px; text-align: center;">לא מסכים</th></tr></thead>
@@ -297,12 +386,12 @@
                 <strong>יג. יש לך מחלות נפשיות? נוטל כדורים פסיכיאטריים?</strong>
                 <input type="radio" name="psych" value="y"> כן <input type="radio" name="psych" value="n"> לא <input type="text" placeholder="פרט..." style="margin-top: 5px;">
             </div>
-            <div class="instruction-note" data-html2canvas-ignore="true">כאן המקום להסביר כי הייפוי כוח מתמשך איננו מחליף את הייפוי כוח הרפואי.</div>
+            <div class="instruction-note">כאן המקום להסביר כי הייפוי כוח מתמשך איננו מחליף את הייפוי כוח הרפואי.</div>
         </div>
 
         <div class="section">
             <div class="section-title">7. מיופי הכוח</div>
-            <div class="instruction-note" data-html2canvas-ignore="true">כמה שיותר מיופה כוח כך זה יקשה... עדיף למנות אחד או אחד לכל תחום.</div>
+            <div class="instruction-note">כמה שיותר מיופה כוח כך זה יקשה... עדיף למנות אחד או אחד לכל תחום.</div>
             <div id="proxiesContainer">
                 <div class="proxy-card">
                     <div style="font-weight: bold; border-bottom: 1px dashed #ccc; padding-bottom: 5px; margin-bottom: 10px;">פרטי מיופה כוח</div>
@@ -316,7 +405,7 @@
                     <div style="margin-top: 10px;"><strong>בתחומים:</strong> <input type="checkbox"> כלכלי <input type="checkbox"> רפואי <input type="checkbox"> אישי</div>
                 </div>
             </div>
-            <button type="button" class="btn-add" onclick="addProxy()" data-html2canvas-ignore="true">+ הוסף מיופה כוח</button>
+            <button type="button" class="btn-add" onclick="addProxy()">+ הוסף מיופה כוח</button>
             <div class="form-group" style="margin-top: 20px;"><label>מנגנון הכרעה במקרה של מחלוקת:</label><input type="text" placeholder="שם האדם המכריע"></div>
             <div class="form-group"><label>שכר למיופה הכוח (אם קיים):</label><input type="text" placeholder="סכום בש''ח"></div>
         </div>
@@ -330,7 +419,7 @@
                 3. אני מבקש למנוע ממני סבל גופני מיותר גם אם הטיפול יוביל להארכת חיים.<br>
                 4. אם אין סיכוי להבראה, אבקש לא לטפל בי.
             </p>
-            <div class="form-group"><label>הערות נוספות והתאמות אישיות להצהרות אלו:</label><textarea style="height: 100px;"></textarea></div>
+            <div class="form-group"><label>הערות נוספות והתאמות אישיות להצהרות אלו:</label><textarea oninput="autoGrow(this)"></textarea></div>
         </div>
 
         <div class="section">
@@ -338,13 +427,26 @@
             <p>אני מאשר שכל האמור לעיל הוסבר לי, וכי אני חותם מרצוני החופשי.</p>
             <div class="form-row"><div class="form-group"><label>תאריך:</label><input type="date" id="signDate"></div></div>
             <label>חתימת הממנה:</label>
-            <canvas id="signature-pad" class="signature-pad" width="600" height="200"></canvas>
-            <button type="button" class="btn-clear" onclick="clearSig()" style="margin-top: 5px;" data-html2canvas-ignore="true">נקה חתימה</button>
+            <canvas id="signature-pad" class="signature-pad" width="600" height="150"></canvas>
+            <button type="button" class="btn-clear" onclick="clearSig()" style="margin-top: 5px;">נקה חתימה</button>
         </div>
     </div>
 
     <script>
         document.getElementById('signDate').valueAsDate = new Date();
+
+        // הגדלה אוטומטית של שדות טקסט בעת הקלדה
+        function autoGrow(element) {
+            element.style.height = 'auto';
+            element.style.height = (element.scrollHeight) + 'px';
+        }
+
+        // החלת הגדלה אוטומטית על כל ה-textareas בטעינה הראשונית
+        document.addEventListener('DOMContentLoaded', function() {
+            var textareas = document.querySelectorAll('textarea');
+            textareas.forEach(el => autoGrow(el));
+        });
+
 
         function addRow(tableId) {
             const table = document.getElementById(tableId);
@@ -401,23 +503,29 @@
 
         function clearSig() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
-        // PDF Generation Logic (Simple & Reliable + data-html2canvas-ignore)
-        function generatePDF() {
+        // ===========================================
+        // פונקציית הדפסה ממשלתית (Native Browser Print)
+        // ===========================================
+        function printToPDF() {
+            // 1. קביעת שם הקובץ דרך הכותרת (טריק לדפדפנים)
             var name = document.getElementById('appointerName').value || 'פלוני';
             var id = document.getElementById('appointerID').value || '000000000';
-            var filename = name + '_' + id + '_ייפוי-כוח.pdf';
-            var element = document.getElementById('form-content');
+            var safeName = name.replace(/[^א-תa-z0-9]/gi, '_');
+            
+            var originalTitle = document.title;
+            document.title = safeName + "_" + id + "_ייפוי-כוח"; 
 
-            var opt = {
-                margin:       5,
-                filename:     filename,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
+            // 2. הרחבת תיבות טקסט לגובה התוכן המדויק לפני ההדפסה (למקרה ששכחו להקליד)
+            var textareas = document.querySelectorAll('textarea');
+            textareas.forEach(el => {
+                autoGrow(el);
+            });
 
-            // הספרייה יודעת אוטומטית להתעלם מאלמנטים עם התכונה data-html2canvas-ignore="true"
-            html2pdf().set(opt).from(element).save();
+            // 3. פתיחת חלון ההדפסה של הדפדפן
+            window.print();
+
+            // 4. החזרת הכותרת המקורית
+            setTimeout(() => { document.title = originalTitle; }, 1000);
         }
     </script>
 </body>
