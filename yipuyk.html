@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ייפוי כוח מתמשך - טופס מלא ומעודכן</title>
+    <title>ייפוי כוח מתמשך - טופס סופי</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body {
@@ -19,6 +19,7 @@
             background: white;
             padding: 40px;
             box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            min-height: 297mm;
         }
         h1, h2, h3 { text-align: center; color: #2c3e50; }
         h1 { margin-bottom: 5px; font-size: 24px; }
@@ -40,17 +41,16 @@
             color: #3498db;
         }
         
-        /* Red Instruction Text - Visible on screen, hidden in print/PDF */
+        /* עיצוב להערות האדומות */
         .instruction-note {
             color: #c0392b;
             font-size: 13px;
             font-weight: bold;
             background-color: #fce4ec;
-            padding: 10px;
-            border-right: 4px solid #c0392b;
-            margin: 10px 0 15px 0;
+            padding: 5px;
+            border-right: 3px solid #c0392b;
+            margin: 5px 0 10px 0;
             display: block;
-            line-height: 1.5;
         }
 
         .form-row { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; }
@@ -60,36 +60,19 @@
         input[type="text"], input[type="number"], input[type="date"], input[type="email"], select, textarea {
             width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit;
         }
-        input[type="checkbox"], input[type="radio"] { transform: scale(1.2); margin-left: 5px; }
         textarea { resize: vertical; min-height: 60px; }
         
-        /* Tables */
         table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: right; font-size: 13px; vertical-align: top; }
         th { background-color: #f9f9f9; }
         
         .btn-add {
-            background-color: #3498db; color: white; border: none; padding: 5px 15px; 
-            border-radius: 4px; cursor: pointer; font-size: 13px; margin-top: 5px; display: inline-block;
+            background-color: #3498db; color: white; border: none; padding: 5px 10px; 
+            border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 5px;
         }
 
-        /* Proxy Card Style */
         .proxy-card {
-            background: #f9f9f9;
-            padding: 15px;
-            border: 1px solid #e0e0e0;
-            margin-bottom: 15px;
-            border-radius: 4px;
-            position: relative;
-        }
-        .proxy-header { font-weight: bold; margin-bottom: 10px; color: #555; border-bottom: 1px dashed #ccc; padding-bottom: 5px;}
-
-        /* Checkbox Grid */
-        .checkbox-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 10px;
-            margin-bottom: 15px;
+            background: #f9f9f9; padding: 15px; border: 1px solid #e0e0e0; margin-bottom: 15px; border-radius: 4px;
         }
 
         /* Signature Canvas */
@@ -98,7 +81,6 @@
             touch-action: none; cursor: crosshair;
         }
         
-        /* Action Buttons */
         .actions {
             position: fixed; bottom: 20px; left: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 999;
         }
@@ -108,21 +90,11 @@
         }
         .btn-save { background-color: #27ae60; color: white; }
         .btn-clear { background-color: #e74c3c; color: white; font-size: 12px; padding: 5px 10px; border-radius: 4px; }
-
-        /* Print/PDF Hiding Logic */
-        @media print {
-            .no-print, .actions, .btn-add, .instruction-note { display: none !important; }
-            .container { box-shadow: none; padding: 0; margin: 0; max-width: 100%; }
-            body { background: white; padding: 0; }
-            textarea { border: none; resize: none; }
-            input, select { border: none; background: transparent; -webkit-appearance: none; }
-            .proxy-card { break-inside: avoid; }
-        }
     </style>
 </head>
 <body>
 
-    <div class="actions">
+    <div class="actions" data-html2canvas-ignore="true">
         <button class="main-btn btn-save" onclick="generatePDF()">שמור כ-PDF</button>
     </div>
 
@@ -134,8 +106,8 @@
         <div class="section">
             <div class="section-title">1. פרטי הממנה</div>
             <div class="form-row">
-                <div class="form-group"><label>שם הממנה:</label><input type="text" id="appointerName"></div>
-                <div class="form-group"><label>תעודת זהות:</label><input type="text" id="appointerID"></div>
+                <div class="form-group"><label>שם הממנה:</label><input type="text" id="appointerName" placeholder="ישראל ישראלי"></div>
+                <div class="form-group"><label>תעודת זהות:</label><input type="text" id="appointerID" placeholder="123456789"></div>
             </div>
             <div class="form-row">
                 <div class="form-group"><label>טלפון נייד:</label><input type="text"></div>
@@ -144,7 +116,7 @@
             <div class="form-group"><label>כתובת מלאה:</label><input type="text"></div>
             
             <div class="form-group">
-                <label>קבלת פרטים מהאפוטרופוס (ניתן לסמן מספר אפשרויות):</label>
+                <label>קבלת פרטים מהאפוטרופוס:</label>
                 <div>
                     <input type="checkbox"> דואר אלקטרוני &nbsp;
                     <input type="checkbox"> לנייד &nbsp;
@@ -155,186 +127,100 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>מצב משפחתי:</label>
-                    <select>
-                        <option value="">בחר...</option>
-                        <option>נשוי</option><option>רווק</option><option>גרוש</option><option>אלמן</option>
-                    </select>
+                    <select><option value="">בחר...</option><option>נשוי</option><option>רווק</option><option>גרוש</option><option>אלמן</option></select>
                 </div>
                 <div class="form-group"><label>שם בן/בת הזוג:</label><input type="text"></div>
-                <div class="form-group">
-                    <label>מתגוררים יחדיו?</label>
-                    <select><option value="">בחר...</option><option>כן</option><option>לא</option></select>
-                </div>
+                <div class="form-group"><label>מתגוררים יחדיו?</label><select><option value="">בחר...</option><option>כן</option><option>לא</option></select></div>
             </div>
         </div>
 
         <div class="section">
             <div class="section-title">2. ילדים</div>
-            
             <div class="form-group">
                 <label>האם הילדים מאותו בן זוג?</label>
                 <select style="width: 100px;"><option value="">בחר...</option><option>כן</option><option>לא</option></select>
             </div>
-            <div class="instruction-note">
+            <div class="instruction-note" data-html2canvas-ignore="true">
                 (אם יש ילדים מבני זוג שונים לוודא שאין סכסוכים בכדי למנוע התנגדויות)
             </div>
 
             <table id="childrenTable">
                 <thead>
-                    <tr>
-                        <th>שם</th>
-                        <th style="width: 40px;">גיל</th>
-                        <th>מצב משפחתי</th>
-                        <th>עיסוק</th>
-                        <th style="width: 100px;">טלפון</th>
-                        <th>דוא"ל</th>
-                    </tr>
+                    <tr><th>שם</th><th style="width: 40px;">גיל</th><th>מצב משפחתי</th><th>עיסוק</th><th style="width: 100px;">טלפון</th><th>דוא"ל</th></tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td><input type="text"></td>
-                        <td><input type="number"></td>
-                        <td>
-                            <select>
-                                <option value="">בחר...</option>
-                                <option>רווק</option><option>נשוי</option><option>גרוש</option><option>אלמן</option>
-                            </select>
-                        </td>
-                        <td><input type="text"></td>
-                        <td><input type="text"></td>
-                        <td><input type="email"></td>
+                        <td><input type="text"></td><td><input type="number"></td>
+                        <td><select><option value="">בחר...</option><option>רווק</option><option>נשוי</option><option>גרוש</option><option>אלמן</option></select></td>
+                        <td><input type="text"></td><td><input type="text"></td><td><input type="email"></td>
                     </tr>
                 </tbody>
             </table>
-            <button type="button" class="btn-add" onclick="addRow('childrenTable')">+ הוסף ילד</button>
+            <button type="button" class="btn-add" onclick="addRow('childrenTable')" data-html2canvas-ignore="true">+ הוסף ילד</button>
 
             <div class="form-group" style="margin-top: 15px;">
                 <label>עיסוק הממנה:</label>
                 <input type="text">
             </div>
-            <div class="instruction-note">
+            <div class="instruction-note" data-html2canvas-ignore="true">
                 (יש לבדוק שהממנה לא בעל עסק בעל חברה ואם כן לתת את הדעת על כך)
             </div>
         </div>
 
         <div class="section">
             <div class="section-title">3. עניינים כלכליים ונכסים</div>
-            
-            <div class="checkbox-grid">
-                <div><input type="checkbox"> דירה</div>
-                <div><input type="checkbox"> נכסים להשכרה</div>
-                <div><input type="checkbox"> עסק</div>
-                <div><input type="checkbox"> רכוש בחו"ל</div>
+            <div class="form-group">
+                <label>נכסים ברשותך:</label>
+                <div><input type="checkbox"> דירה <input type="checkbox"> נכסים להשכרה <input type="checkbox"> עסק <input type="checkbox"> רכוש בחו"ל</div>
             </div>
-
             <div class="form-group">
                 <label>הנחיות לגבי מכירת דירה/נכסים:</label>
                 <textarea></textarea>
-                <div class="instruction-note">
-                    (לחקור את הממנה על נכסיו ומה ההנחיות שלו לגביהן.)
-                </div>
+                <div class="instruction-note" data-html2canvas-ignore="true">(לחקור את הממנה על נכסיו ומה ההנחיות שלו לגביהן.)</div>
             </div>
-            
             <div class="form-group">
                 <label>הערות והסבר לגבי מכירת דירה:</label>
                 <textarea placeholder="פרט כאן סיבות, תנאים או נסיבות..."></textarea>
-                <div class="instruction-note">
-                    (כמובן להזכיר שלא ניתן למכור את הדירה ללא התערבות בימ"ש.)
-                </div>
+                <div class="instruction-note" data-html2canvas-ignore="true">(כמובן להזכיר שלא ניתן למכור את הדירה ללא התערבות בימ"ש.)</div>
             </div>
 
-            <label style="margin-top: 20px;">חשבונות בנק:</label>
+            <label>חשבונות בנק:</label>
             <table id="bankTable">
-                <thead>
-                    <tr>
-                        <th>שם הבנק</th>
-                        <th style="width: 60px;">סניף</th>
-                        <th>מס' חשבון</th>
-                        <th>סוג חשבון / מיקום</th>
-                        <th style="width: 50px;">מניות?</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>שם הבנק</th><th style="width: 60px;">סניף</th><th>מס' חשבון</th><th>סוג חשבון / מיקום</th><th style="width: 50px;">מניות?</th></tr></thead>
                 <tbody>
                     <tr>
-                        <td>
-                            <select>
-                                <option value="">בחר בנק...</option>
-                                <option>בנק הפועלים</option>
-                                <option>בנק לאומי</option>
-                                <option>בנק מזרחי טפחות</option>
-                                <option>בנק דיסקונט</option>
-                                <option>הבנק הבינלאומי הראשון</option>
-                                <option>בנק יהב</option>
-                                <option>בנק ירושלים</option>
-                                <option>בנק מרכנתיל דיסקונט</option>
-                                <option>בנק מסד</option>
-                                <option>בנק ONE ZERO (וואן זירו)</option>
-                                <option disabled>--- בנקים זרים ---</option>
-                                <option>Citibank N.A (22)</option>
-                                <option>HSBC Bank plc (23)</option>
-                                <option>Barclays Bank PLC (27)</option>
-                            </select>
-                        </td>
-                        <td><input type="text"></td>
-                        <td><input type="text"></td>
-                        <td>
-                            <select>
-                                <option value="">בחר...</option>
-                                <option>פרטי רגיל</option>
-                                <option>עסקי</option>
-                                <option>חברה פרטית</option>
-                                <option>חוץ בנקאי</option>
-                            </select>
-                        </td>
+                        <td><select><option value="">בחר...</option><option>פועלים</option><option>לאומי</option><option>מזרחי</option><option>דיסקונט</option><option>בינלאומי</option><option>יהב</option><option>ירושלים</option><option>מרכנתיל</option><option>מסד</option><option>ONE ZERO</option><option>Citibank</option><option>HSBC</option><option>Barclays</option></select></td>
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <td><select><option value="">בחר...</option><option>פרטי</option><option>עסקי</option><option>חברה</option></select></td>
                         <td style="text-align: center;"><input type="checkbox"></td>
                     </tr>
                 </tbody>
             </table>
-            <button type="button" class="btn-add" onclick="addRow('bankTable')">+ הוסף חשבון</button>
-
-            <div class="instruction-note">
-                חשוב לבדוק באיזה בנקים יש לממנה חשבונות בנק... תמיד לרשום "ו/או כל בנק אחר"...<br>
-                מניות וחסכונות: לשים דגש חשוב. לפרט מה לעשות במניות (להחזיק/למכור/תנאים/מתי).
-            </div>
+            <button type="button" class="btn-add" onclick="addRow('bankTable')" data-html2canvas-ignore="true">+ הוסף חשבון</button>
+            <div class="instruction-note" data-html2canvas-ignore="true">חשוב לבדוק באיזה בנקים יש לממנה חשבונות... תמיד לרשום "ו/או כל בנק אחר".</div>
 
             <div class="form-row">
-                <div class="form-group">
-                    <label>האם להמשיך השקעות באופן סולידי?</label>
-                    <select><option value="">בחר...</option><option>כן</option><option>לא</option></select>
-                </div>
-                <div class="form-group">
-                    <label>לאפשר למיופה הכוח כרטיס אשראי?</label>
-                    <select><option value="">בחר...</option><option>כן</option><option>לא</option></select>
-                </div>
+                <div class="form-group"><label>האם להמשיך השקעות באופן סולידי?</label><select><option value="">בחר...</option><option>כן</option><option>לא</option></select></div>
+                <div class="form-group"><label>לאפשר למיופה הכוח כרטיס אשראי?</label><select><option value="">בחר...</option><option>כן</option><option>לא</option></select></div>
             </div>
-
             <div class="form-group">
                 <label>הנחיות למתנות/הלוואות/תרומות:</label>
                 <textarea></textarea>
-                <div class="instruction-note">
-                    לעזור לממנה לחשוב האם יש מתנות שחשב לתת... להזכיר שמתנות מעל 100 ש"ח דורשות אישור בימ"ש ללא הוראה מפורשת.
-                </div>
+                <div class="instruction-note" data-html2canvas-ignore="true">להזכיר שמתנות מעל 100 ש"ח דורשות אישור בימ"ש ללא הוראה מפורשת.</div>
             </div>
-
             <div class="form-group">
                 <label>מידע על חובות/תביעות/פשיטת רגל:</label>
                 <textarea></textarea>
-                <div class="instruction-note">
-                    ככל ויש - לצרף את שם העו"ד שמטפל, לכתב מה ההנחיות של הממנה לאותו מקרה...
-                </div>
+                <div class="instruction-note" data-html2canvas-ignore="true">ככל ויש - לצרף את שם העו"ד שמטפל, לכתב מה ההנחיות של הממנה לאותו מקרה...</div>
             </div>
-
             <div style="margin-top: 20px; background: #fdfefe; padding: 15px; border: 1px dashed #3498db; border-radius: 4px;">
                 <div class="form-row" style="align-items: center;">
                     <label style="margin-left: 10px; min-width: 300px;">1. יש לך קופות פנסיה ופיצויים בארץ ובחו"ל?</label>
                     <select style="width: 80px;"><option value="">בחר...</option><option>כן</option><option>לא</option></select>
                 </div>
-                <div class="form-group">
-                    <label>קופה המנוהלת אצל חב' (פרט שמות):</label>
-                    <input type="text" placeholder="שם חברה 1, שם חברה 2...">
-                </div>
+                <div class="form-group"><label>קופה המנוהלת אצל חב' (פרט שמות):</label><input type="text"></div>
                 <div class="form-row" style="align-items: center; margin-top: 10px;">
-                    <label style="margin-left: 10px; min-width: 300px;">אתה מאשר למיופה הכוח לפדות ו/או להגיש תביעות לקופות במידת הצורך וע"פ שיקול דעתו?</label>
+                    <label style="margin-left: 10px; min-width: 300px;">אתה מאשר למיופה הכוח לפדות/לתבוע?</label>
                     <select style="width: 80px;"><option value="">בחר...</option><option>כן</option><option>לא</option></select>
                 </div>
             </div>
@@ -342,245 +228,97 @@
 
         <div class="section">
             <div class="section-title">4. זכויות סוציאליות, רכב ומסמכים משפטיים</div>
-
             <label>1. זכויות מיוחדות וקצבאות:</label>
-            <div class="checkbox-grid" style="border: 1px solid #eee; padding: 10px; background: #fafafa;">
-                <div><input type="checkbox"> יש לך זכויות מיוחדות?</div>
-                <div><input type="checkbox"> קצבאות שאתה מקבל?</div>
-                <div><input type="checkbox"> קצבת שארים?</div>
-                <div><input type="checkbox"> ילד נכה?</div>
-                <div><input type="checkbox"> נכות?</div>
-                <div style="border-right: 2px solid #ddd; margin-right: 10px; padding-right: 10px;">
-                    <strong>מיקום:</strong>
-                    <input type="checkbox"> בארץ
-                    <input type="checkbox"> בחו"ל
-                </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px;">
+                <div><input type="checkbox"> זכויות מיוחדות</div><div><input type="checkbox"> קצבאות</div><div><input type="checkbox"> קצבת שארים</div>
+                <div><input type="checkbox"> ילד נכה</div><div><input type="checkbox"> נכות</div>
+                <div style="border-right: 2px solid #ddd; padding-right: 10px;"><strong>מיקום:</strong> <input type="checkbox"> בארץ <input type="checkbox"> בחו"ל</div>
             </div>
-            
-            <div class="form-group">
-                <label>הנחיות לקופת פנסיה וקצבאות:</label>
-                <textarea placeholder="פרט כאן הנחיות..."></textarea>
-                <div class="instruction-note">
-                    לקבל ממיופה הכוח הנחיות מה לעשות בקופת הפנסיה שלו והאם לפדות אותה ובאיזה תנאים
-                </div>
+            <div class="form-group"><label>הנחיות לקופת פנסיה וקצבאות:</label><textarea></textarea>
+                <div class="instruction-note" data-html2canvas-ignore="true">לקבל ממיופה הכוח הנחיות מה לעשות בקופת הפנסיה שלו והאם לפדות אותה ובאיזה תנאים</div>
             </div>
-
             <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-
-            <div class="form-row" style="align-items: center;">
-                <label style="margin-left: 10px;">2. יש לך רכב?</label>
-                <select style="width: 100px; margin-left: 20px;"><option value="">בחר...</option><option>כן</option><option>לא</option></select>
-            </div>
-            <div class="form-group">
-                <label>אם כן, מה לעשות עם הרכב?</label>
-                <input type="text">
-            </div>
-
+            <div class="form-row"><div class="form-group" style="flex:0 0 150px;"><label>2. יש לך רכב?</label><select><option value="">בחר...</option><option>כן</option><option>לא</option></select></div><div class="form-group"><label>אם כן, מה לעשות עם הרכב?</label><input type="text"></div></div>
             <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-
             <div class="form-row">
-                <div class="form-group">
-                    <label>3. האם ערכת צוואה?</label>
-                    <select><option value="">בחר...</option><option>כן</option><option>לא</option></select>
-                </div>
-                <div class="form-group">
-                    <label>האם ערכת הסכם ממון?</label>
-                    <select><option value="">בחר...</option><option>כן</option><option>לא</option></select>
-                </div>
-                <div class="form-group">
-                    <label>מתי נערך?</label>
-                    <input type="date">
-                </div>
+                <div class="form-group"><label>3. האם ערכת צוואה?</label><select><option value="">בחר...</option><option>כן</option><option>לא</option></select></div>
+                <div class="form-group"><label>האם ערכת הסכם ממון?</label><select><option value="">בחר...</option><option>כן</option><option>לא</option></select></div>
+                <div class="form-group"><label>מתי נערך?</label><input type="date"></div>
             </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label>איפה הפקדת אותה?</label>
-                    <input type="text">
-                </div>
-                <div class="form-group">
-                    <label>נתת הוראות מיוחדות לקבורה?</label>
-                    <select><option value="">בחר...</option><option>כן</option><option>לא</option></select>
-                </div>
+            <div class="form-row"><div class="form-group"><label>איפה הפקדת אותה?</label><input type="text"></div><div class="form-group"><label>הוראות קבורה?</label><select><option value="">בחר...</option><option>כן</option><option>לא</option></select></div></div>
+            <div class="form-group"><label>הערות והסברים נוספים:</label><textarea></textarea>
+                <div class="instruction-note" data-html2canvas-ignore="true">לוודא שאין סכסוכים, הדרה של ילד או השפעה בלתי הוגנת.</div>
             </div>
-
-            <div class="form-group">
-                <label>הערות והסברים נוספים:</label>
-                <textarea></textarea>
-                <div class="instruction-note">
-                    מאוד חשוב לקבל פרטים בנושא הצוואה ולוודא שאין סכסוכים והאם יש הדרה של ילד. כאן המקום לבדוק ולהריח האם יש איזה שהיא השפעה בלתי הוגנת.
-                </div>
-            </div>
-
             <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-
             <div style="background: #f0f8ff; padding: 15px; border-radius: 5px;">
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>האם ערכת בעבר ייפוי כוח מתמשך?</label>
-                        <select><option value="">בחר...</option><option>כן</option><option>לא</option></select>
-                    </div>
-                    <div class="form-group">
-                        <label>האם ערכת ייפוי כוח רפואי?</label>
-                        <select><option value="">בחר...</option><option>כן</option><option>לא</option></select>
-                    </div>
+                    <div class="form-group"><label>ערכת בעבר ייפוי כוח מתמשך?</label><select><option value="">בחר...</option><option>כן</option><option>לא</option></select></div>
+                    <div class="form-group"><label>ערכת ייפוי כוח רפואי?</label><select><option value="">בחר...</option><option>כן</option><option>לא</option></select></div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>האם הפקדת אותו?</label>
-                        <select><option value="">בחר...</option><option>כן</option><option>לא</option></select>
-                    </div>
-                    <div class="form-group">
-                        <label>תאריך עריכה/הפקדה:</label>
-                        <input type="date">
-                    </div>
-                </div>
-                <div class="instruction-note">
-                    להסביר את המשמעות של הייפוי כוח הרפואי (אולי תצליחו למכור שרות נוסף...)
-                </div>
+                <div class="form-row"><div class="form-group"><label>האם הפקדת אותו?</label><select><option value="">בחר...</option><option>כן</option><option>לא</option></select></div><div class="form-group"><label>תאריך:</label><input type="date"></div></div>
+                <div class="instruction-note" data-html2canvas-ignore="true">להסביר את המשמעות של הייפוי כוח הרפואי.</div>
             </div>
         </div>
 
         <div class="section">
             <div class="section-title">5. עניינים אישיים</div>
-            <div class="instruction-note">
-                כאשר אתם מכינים את הייפוי כוח הממנה לא תמיד יודע להסביר לכם על הוראות ועניינים אישים ועל כן השאלות המנחות והחקירה שלכם כאן חשובה מאוד.
-            </div>
-
-            <div class="form-group">
-                <label>מתי יחשב המצב כ"אי כשירות"?</label>
-                <textarea placeholder="הנחיות לעניין קביעת אי כשירות"></textarea>
-            </div>
-            <div class="form-group">
-                <label>הרגלים חשובים וסדר יום (בית כנסת, מועדון, שחיה):</label>
-                <textarea></textarea>
-            </div>
-            <div class="form-group">
-                <label>העדפות מזון (צמחוני/טבעוני/אלרגיות):</label>
-                <textarea></textarea>
-            </div>
-            <div class="form-group">
-                <label>העדפות למגורים וטיפול (בית/בית אבות/מטפל/ת):</label>
-                <textarea></textarea>
-            </div>
-            
-            <div class="form-group" style="margin-top: 15px;">
-                <label>האם יש לך רכוש מיוחד שאתה רוצה שיקבל טיפול מיוחד? (בעל חיים, חפצי אומנות, תכשיטים):</label>
-                <input type="text" placeholder="פרט כאן (למשל: הכלב רקסי, ציורים בסלון...)">
-            </div>
-            <div class="form-group">
-                <label>הנחיות מיוחדות לטיפול ברכוש זה:</label>
-                <textarea placeholder="כיצד לטפל, למי למסור וכו'"></textarea>
-            </div>
+            <div class="instruction-note" data-html2canvas-ignore="true">הממנה לא תמיד יודע להסביר על הוראות ועניינים אישים - השאלות המנחות חשובות כאן.</div>
+            <div class="form-group"><label>מתי יחשב המצב כ"אי כשירות"?</label><textarea placeholder="הנחיות לעניין קביעת אי כשירות"></textarea></div>
+            <div class="form-group"><label>הרגלים חשובים וסדר יום:</label><textarea></textarea></div>
+            <div class="form-group"><label>העדפות מזון:</label><textarea></textarea></div>
+            <div class="form-group"><label>העדפות למגורים וטיפול:</label><textarea></textarea></div>
+            <div class="form-group" style="margin-top: 15px;"><label>האם יש לך רכוש מיוחד?</label><input type="text"></div>
+            <div class="form-group"><label>הנחיות מיוחדות לטיפול ברכוש זה:</label><textarea></textarea></div>
         </div>
 
         <div class="section">
             <div class="section-title">6. עניינים רפואיים</div>
-            <div class="form-row">
-                <div class="form-group"><label>קופת חולים:</label><input type="text"></div>
-                <div class="form-group"><label>רופא מטפל:</label><input type="text"></div>
-            </div>
-
-            <div class="form-group" style="margin-top: 15px;">
-                <label>האם יש שיטות רפואיות מיוחדות שבהם אתה רוצה שיטפלו בך? (דיקור, הומאופתיה, כדורים קבועים, טיפולים מיוחדים):</label>
-                <textarea placeholder="פרט כאן העדפות רפואיות משלימות, תרופות קבועות וכו'"></textarea>
-            </div>
-            
+            <div class="form-row"><div class="form-group"><label>קופת חולים:</label><input type="text"></div><div class="form-group"><label>רופא מטפל:</label><input type="text"></div></div>
+            <div class="form-group" style="margin-top: 15px;"><label>שיטות רפואיות מיוחדות:</label><textarea></textarea></div>
             <label style="margin-top: 20px;">הסכמה לטיפולים רפואיים:</label>
             <table>
-                <thead>
-                    <tr>
-                        <th>טיפול</th>
-                        <th style="width: 80px; text-align: center;">מסכים</th>
-                        <th style="width: 80px; text-align: center;">לא מסכים</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>טיפול</th><th style="width: 80px; text-align: center;">מסכים</th><th style="width: 80px; text-align: center;">לא מסכים</th></tr></thead>
                 <tbody>
-                    <tr><td>א. מאריכי חיים</td><td align="center"><input type="radio" name="med_a" value="yes"></td><td align="center"><input type="radio" name="med_a" value="no"></td></tr>
-                    <tr><td>ב. החייאה</td><td align="center"><input type="radio" name="med_b" value="yes"></td><td align="center"><input type="radio" name="med_b" value="no"></td></tr>
-                    <tr><td>ג. תרופות/הלם חשמלי</td><td align="center"><input type="radio" name="med_c" value="yes"></td><td align="center"><input type="radio" name="med_c" value="no"></td></tr>
-                    <tr><td>ד. ניתוחים</td><td align="center"><input type="radio" name="med_d" value="yes"></td><td align="center"><input type="radio" name="med_d" value="no"></td></tr>
-                    <tr><td>ה. טיפולי כימותרפיה/הקרנות</td><td align="center"><input type="radio" name="med_e" value="yes"></td><td align="center"><input type="radio" name="med_e" value="no"></td></tr>
-                    <tr><td>ו. בדיקות דם</td><td align="center"><input type="radio" name="med_f" value="yes"></td><td align="center"><input type="radio" name="med_f" value="no"></td></tr>
-                    <tr><td>ז. צילומים</td><td align="center"><input type="radio" name="med_g" value="yes"></td><td align="center"><input type="radio" name="med_g" value="no"></td></tr>
-                    <tr><td>ח. בדיקות אבחנתיות (לדוג': קולונוסקופיה/גסטרוסקופיה)</td><td align="center"><input type="radio" name="med_h" value="yes"></td><td align="center"><input type="radio" name="med_h" value="no"></td></tr>
-                    <tr><td>ט. טיפול תרופתי</td><td align="center"><input type="radio" name="med_i" value="yes"></td><td align="center"><input type="radio" name="med_i" value="no"></td></tr>
-                    <tr><td>י. דיאליזה</td><td align="center"><input type="radio" name="med_j" value="yes"></td><td align="center"><input type="radio" name="med_j" value="no"></td></tr>
-                    <tr><td>יא. אשפוז</td><td align="center"><input type="radio" name="med_k" value="yes"></td><td align="center"><input type="radio" name="med_k" value="no"></td></tr>
-                    <tr><td>יב. קבלת מידע רפואי או חוות דעת רפואיות</td><td align="center"><input type="radio" name="med_l" value="yes"></td><td align="center"><input type="radio" name="med_l" value="no"></td></tr>
+                    <tr><td>א. מאריכי חיים</td><td align="center"><input type="radio" name="m1" value="y"></td><td align="center"><input type="radio" name="m1" value="n"></td></tr>
+                    <tr><td>ב. החייאה</td><td align="center"><input type="radio" name="m2" value="y"></td><td align="center"><input type="radio" name="m2" value="n"></td></tr>
+                    <tr><td>ג. תרופות/הלם חשמלי</td><td align="center"><input type="radio" name="m3" value="y"></td><td align="center"><input type="radio" name="m3" value="n"></td></tr>
+                    <tr><td>ד. ניתוחים</td><td align="center"><input type="radio" name="m4" value="y"></td><td align="center"><input type="radio" name="m4" value="n"></td></tr>
+                    <tr><td>ה. כימותרפיה/הקרנות</td><td align="center"><input type="radio" name="m5" value="y"></td><td align="center"><input type="radio" name="m5" value="n"></td></tr>
+                    <tr><td>ו. בדיקות דם</td><td align="center"><input type="radio" name="m6" value="y"></td><td align="center"><input type="radio" name="m6" value="n"></td></tr>
+                    <tr><td>ז. צילומים</td><td align="center"><input type="radio" name="m7" value="y"></td><td align="center"><input type="radio" name="m7" value="n"></td></tr>
+                    <tr><td>ח. בדיקות אבחנתיות</td><td align="center"><input type="radio" name="m8" value="y"></td><td align="center"><input type="radio" name="m8" value="n"></td></tr>
+                    <tr><td>ט. טיפול תרופתי</td><td align="center"><input type="radio" name="m9" value="y"></td><td align="center"><input type="radio" name="m9" value="n"></td></tr>
+                    <tr><td>י. דיאליזה</td><td align="center"><input type="radio" name="m10" value="y"></td><td align="center"><input type="radio" name="m10" value="n"></td></tr>
+                    <tr><td>יא. אשפוז</td><td align="center"><input type="radio" name="m11" value="y"></td><td align="center"><input type="radio" name="m11" value="n"></td></tr>
+                    <tr><td>יב. מידע רפואי</td><td align="center"><input type="radio" name="m12" value="y"></td><td align="center"><input type="radio" name="m12" value="n"></td></tr>
                 </tbody>
             </table>
-
             <div style="margin-top: 15px; padding: 10px; border: 1px solid #ccc; background: #fafafa;">
                 <strong>יג. יש לך מחלות נפשיות? נוטל כדורים פסיכיאטריים?</strong>
-                <span style="margin-right: 20px;">
-                    <input type="radio" name="med_m" value="yes"> כן
-                    <input type="radio" name="med_m" value="no" style="margin-right: 15px;"> לא
-                </span>
-                <input type="text" placeholder="פרט במידת הצורך..." style="margin-top: 5px;">
+                <input type="radio" name="psych" value="y"> כן <input type="radio" name="psych" value="n"> לא <input type="text" placeholder="פרט..." style="margin-top: 5px;">
             </div>
-
-            <div class="instruction-note">
-                כאן המקום להסביר כי הייפוי כוח מתמשך איננו מחליף את הייפוי כוח הרפואי ומי שחשוב לו לתת הנחיות על שלא יעשו לו טיפולים מאריכי חיים, חייב למלא ייפוי כוח רפואי, אבל בכל זאת אני שואלת ומסבירה לממנה שחשוב לשמוע את דעתו הגם אם אין לזה משמעות משפטית. עדיין זה נותן למיופה הכוח את היכולת לדעת מה לעשות בשעת אמת ולקבל ממך את ההסכמה והאישור לטיפול הנכון שהיית רוצה. החלטות רפואיות יכולות להיות מאוד קשות למיופה הכוח ולכן כאשר הממנה כותב שזה מה שהוא היה רוצה, למיופה הכוח קל יותר לפעול בשמו ולפי הלך הרוח שלו.
-            </div>
+            <div class="instruction-note" data-html2canvas-ignore="true">כאן המקום להסביר כי הייפוי כוח מתמשך איננו מחליף את הייפוי כוח הרפואי.</div>
         </div>
 
         <div class="section">
             <div class="section-title">7. מיופי הכוח</div>
-            
-            <div class="instruction-note">
-                כאן המקום להסביר לממנה שכמה שיותר מיופה כוח כך זה יקשה עליהם את היכולת לפעול ולנהל את ענייניו באופן שוטף ורציף, ועל כן עדיף למנות מיופה כוח אחד ו/או לכל היותר אחד לכל סעיף ומיופה כוח מחליפים או מיודעים.
-            </div>
-
+            <div class="instruction-note" data-html2canvas-ignore="true">כמה שיותר מיופה כוח כך זה יקשה... עדיף למנות אחד או אחד לכל תחום.</div>
             <div id="proxiesContainer">
                 <div class="proxy-card">
-                    <div class="proxy-header">פרטי מיופה כוח</div>
-                    <div class="form-row">
-                        <div class="form-group"><label>שם:</label><input type="text"></div>
-                        <div class="form-group"><label>ת.ז:</label><input type="text"></div>
+                    <div style="font-weight: bold; border-bottom: 1px dashed #ccc; padding-bottom: 5px; margin-bottom: 10px;">פרטי מיופה כוח</div>
+                    <div class="form-row"><div class="form-group"><label>שם:</label><input type="text"></div><div class="form-group"><label>ת.ז:</label><input type="text"></div></div>
+                    <div class="form-row"><div class="form-group"><label>טלפון:</label><input type="text"></div><div class="form-group"><label>קירבה:</label><input type="text"></div></div>
+                    <div class="form-group"><label>דוא"ל:</label><input type="email"></div>
+                    <div class="form-group" style="margin-top: 10px; background: #eef2f7; padding: 10px; border-radius: 4px;">
+                        <label>קבלת דיווח:</label> <div><input type="checkbox"> לנייד <input type="checkbox"> דוא"ל <input type="checkbox"> דואר ישראל</div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group"><label>טלפון:</label><input type="text"></div>
-                        <div class="form-group"><label>קירבה:</label><input type="text"></div>
-                    </div>
-                    <div class="form-group">
-                        <label>דוא"ל:</label>
-                        <input type="email">
-                    </div>
-                    
-                    <div class="form-group" style="background: #eef2f7; padding: 10px; border-radius: 4px;">
-                        <label>איך אתה מעוניין לקבל את הדיווח מהאפוטרופוס?</label>
-                        <div>
-                            <input type="checkbox"> לנייד &nbsp;
-                            <input type="checkbox"> דוא"ל &nbsp;
-                            <input type="checkbox"> דואר ישראל
-                        </div>
-                    </div>
-
-                    <div class="form-group" style="margin-top: 10px;">
-                        <label>מיופה הכח ביחד עם/מחליף את:</label>
-                        <input type="text" placeholder="שם מיופה כוח אחר...">
-                    </div>
-                    
-                    <div style="margin-top: 10px;">
-                        <strong>בתחומים:</strong> &nbsp;
-                        <input type="checkbox"> כלכלי &nbsp;
-                        <input type="checkbox"> רפואי &nbsp;
-                        <input type="checkbox"> אישי
-                    </div>
+                    <div class="form-group" style="margin-top: 10px;"><label>מיופה הכח ביחד עם/מחליף את:</label><input type="text"></div>
+                    <div style="margin-top: 10px;"><strong>בתחומים:</strong> <input type="checkbox"> כלכלי <input type="checkbox"> רפואי <input type="checkbox"> אישי</div>
                 </div>
             </div>
-            
-            <button type="button" class="btn-add" onclick="addProxy()">+ הוסף מיופה כוח נוסף</button>
-
-            <div class="form-group" style="margin-top: 20px;">
-                <label>מנגנון הכרעה במקרה של מחלוקת:</label>
-                <input type="text" placeholder="שם האדם המכריע">
-            </div>
-            <div class="form-group">
-                <label>שכר למיופה הכוח (אם קיים):</label>
-                <input type="text" placeholder="סכום בש''ח">
-            </div>
+            <button type="button" class="btn-add" onclick="addProxy()" data-html2canvas-ignore="true">+ הוסף מיופה כוח</button>
+            <div class="form-group" style="margin-top: 20px;"><label>מנגנון הכרעה במקרה של מחלוקת:</label><input type="text" placeholder="שם האדם המכריע"></div>
+            <div class="form-group"><label>שכר למיופה הכוח (אם קיים):</label><input type="text" placeholder="סכום בש''ח"></div>
         </div>
 
         <div class="section">
@@ -592,36 +330,22 @@
                 3. אני מבקש למנוע ממני סבל גופני מיותר גם אם הטיפול יוביל להארכת חיים.<br>
                 4. אם אין סיכוי להבראה, אבקש לא לטפל בי.
             </p>
-            <div class="form-group">
-                <label>הערות נוספות והתאמות אישיות להצהרות אלו:</label>
-                <textarea style="height: 100px;"></textarea>
-            </div>
+            <div class="form-group"><label>הערות נוספות והתאמות אישיות להצהרות אלו:</label><textarea style="height: 100px;"></textarea></div>
         </div>
 
         <div class="section">
             <div class="section-title">9. חתימה</div>
             <p>אני מאשר שכל האמור לעיל הוסבר לי, וכי אני חותם מרצוני החופשי.</p>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label>תאריך:</label>
-                    <input type="date" id="signDate">
-                </div>
-            </div>
-
-            <label>חתימת הממנה (חתום בעזרת העכבר או האצבע):</label>
+            <div class="form-row"><div class="form-group"><label>תאריך:</label><input type="date" id="signDate"></div></div>
+            <label>חתימת הממנה:</label>
             <canvas id="signature-pad" class="signature-pad" width="600" height="200"></canvas>
-            <div class="no-print" style="margin-top: 5px;">
-                <button type="button" class="btn-clear" onclick="clearSig()">נקה חתימה</button>
-            </div>
+            <button type="button" class="btn-clear" onclick="clearSig()" style="margin-top: 5px;" data-html2canvas-ignore="true">נקה חתימה</button>
         </div>
     </div>
 
     <script>
-        // Init Date
         document.getElementById('signDate').valueAsDate = new Date();
 
-        // Add Row Function for Tables
         function addRow(tableId) {
             const table = document.getElementById(tableId);
             const tbody = table.querySelector('tbody');
@@ -635,44 +359,34 @@
             tbody.appendChild(row);
         }
 
-        // Add Proxy Card Function
         function addProxy() {
             const container = document.getElementById('proxiesContainer');
-            const cards = container.getElementsByClassName('proxy-card');
-            const newCard = cards[0].cloneNode(true);
-            
-            // Clear values in new card
+            const newCard = container.querySelector('.proxy-card').cloneNode(true);
             const inputs = newCard.querySelectorAll('input');
             inputs.forEach(input => {
                 if(input.type === 'checkbox' || input.type === 'radio') input.checked = false;
                 else input.value = '';
             });
-            
             container.appendChild(newCard);
         }
 
-        // Signature Logic
         var canvas = document.getElementById('signature-pad');
         var ctx = canvas.getContext('2d');
         var isDrawing = false;
 
         ['mousedown', 'touchstart'].forEach(evt => 
             canvas.addEventListener(evt, e => {
-                isDrawing = true; 
-                ctx.beginPath(); 
-                const pos = getPos(e);
-                ctx.moveTo(pos.x, pos.y);
                 if(evt === 'touchstart') e.preventDefault();
+                isDrawing = true; ctx.beginPath();
+                const pos = getPos(e); ctx.moveTo(pos.x, pos.y);
             })
         );
 
         ['mousemove', 'touchmove'].forEach(evt => 
             canvas.addEventListener(evt, e => {
-                if (!isDrawing) return;
-                const pos = getPos(e);
-                ctx.lineTo(pos.x, pos.y);
-                ctx.stroke();
                 if(evt === 'touchmove') e.preventDefault();
+                if(!isDrawing) return;
+                const pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke();
             })
         );
 
@@ -680,16 +394,14 @@
 
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return { x: clientX - rect.left, y: clientY - rect.top };
+            const cx = e.touches ? e.touches[0].clientX : e.clientX;
+            const cy = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: cx - rect.left, y: cy - rect.top };
         }
 
-        function clearSig() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
+        function clearSig() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
-        // PDF Generation
+        // PDF Generation Logic (Simple & Reliable + data-html2canvas-ignore)
         function generatePDF() {
             var name = document.getElementById('appointerName').value || 'פלוני';
             var id = document.getElementById('appointerID').value || '000000000';
@@ -697,13 +409,14 @@
             var element = document.getElementById('form-content');
 
             var opt = {
-                margin: 5,
-                filename: filename,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                margin:       5,
+                filename:     filename,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
+            // הספרייה יודעת אוטומטית להתעלם מאלמנטים עם התכונה data-html2canvas-ignore="true"
             html2pdf().set(opt).from(element).save();
         }
     </script>
