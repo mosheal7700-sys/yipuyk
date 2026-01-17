@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ייפוי כוח מתמשך</title>
+    <style>
+        /* === חישוב רוחב כולל מסגרות === */
+        * { box-sizing: border-box; }
+
+        /* --- הגדרות כלליות (מסך) --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 210mm; /* רוחב A4 */
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            min-height: 297mm;
+            position: relative;
+        }
+        
+        h1, h2, h3 { text-align: center; color: #2c3e50; }
+        h1 { margin-bottom: 5px; font-size: 24px; }
+        h2 { margin-top: 0; font-size: 18px; color: #555; }
+        
+        .section {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+            position: relative;
+            background-color: #fff;
+        }
+        
+        .section-title {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+            color: #3498db;
+        }
+
+        /* --- תאריך מותאם אישית להדפסה --- */
+        #custom-date-header {
+            display: none;
+            position: absolute;
+            top: 10px; left: 20px;
+            font-size: 12px; color: #555;
+            font-family: Arial, sans-serif;
+            direction: ltr;
+        }
+
+        /* --- הערות אדומות (יוסתרו בהדפסה) --- */
+        .instruction-note {
+            color: #c0392b;
+            font-size: 13px;
+            font-weight: bold;
+            background-color: #fce4ec;
+            padding: 5px;
+            border-right: 3px solid #c0392b;
+            margin: 5px 0 10px 0;
+            display: block;
+        }
+
+        /* --- הערה ירוקה (דוגמה) --- */
+        .example-note {
+            color: #2e7d32;
+            font-size: 13px;
+            background-color: #e8f5e9;
+            padding: 15px;
+            border: 1px solid #c8e6c9;
+            border-right: 4px solid #2e7d32;
+            margin-top: 30px;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+        .example-note h4 { margin-top: 0; margin-bottom: 10px; text-decoration: underline; }
+
+        /* --- שדות טופס --- */
+        .form-row { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 10px; }
+        .form-group { flex: 1; min-width: 150px; }
+        label { display: block; margin-bottom: 3px; font-weight: bold; font-size: 14px; }
+        
+        input[type="text"], input[type="number"], input[type="date"], input[type="email"], select, textarea {
+            width: 100%; padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; 
+            font-family: inherit; font-size: 14px; background: #fff; line-height: 1.3;
+        }
+
+        textarea { resize: none; min-height: 30px; overflow: hidden; height: auto; padding-top: 6px; }
+
+        .legal-doc-block { border-bottom: 1px dashed #eee; padding-bottom: 15px; margin-bottom: 15px; }
+        .legal-doc-block:last-child { border-bottom: none; }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        th, td { border: 1px solid #ddd; padding: 6px; text-align: right; font-size: 13px; vertical-align: top; }
+        th { background-color: #f9f9f9; }
+
+        .proxy-card { background: #f9f9f9; padding: 15px; border: 1px solid #e0e0e0; margin-bottom: 15px; border-radius: 4px; }
+        .signature-pad { border: 2px dashed #bbb; background-color: #fff; width: 100%; height: 150px; touch-action: none; cursor: crosshair; }
+
+        /* --- כפתורים --- */
+        .btn-add { background-color: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 5px; }
+        .btn-clear { background-color: #e74c3c; color: white; font-size: 12px; padding: 5px 10px; border-radius: 4px; }
+        
+        .actions { position: fixed; bottom: 20px; left: 20px; z-index: 999; display: flex; gap: 10px; flex-direction: column; }
+        .btn-save { padding: 15px 30px; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3); background-color: #27ae60; color: white; font-size: 16px; }
+        
+        /* כפתור הסיכום החדש */
+        .btn-summary { padding: 15px 30px; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3); background-color: #2980b9; color: white; font-size: 16px; }
+
+        /* אזור הסיכום */
+        #summary-container {
+            display: none; /* מוסתר בהתחלה */
+            margin-top: 40px;
+            border: 2px solid #2980b9;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #f4faff;
+        }
+        #summary-textarea {
+            width: 100%;
+            min-height: 300px;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        /* --- הגדרות הדפסה --- */
+        @media print {
+            .no-print, .actions, .btn-add, .btn-clear, .instruction-note, .example-note { display: none !important; }
+            #custom-date-header { display: block !important; }
+            @page { size: A4; margin: 10mm; }
+            body { background-color: white; padding: 0; margin: 0; width: 100%; }
+            .container { width: 100%; max-width: 100%; box-shadow: none; margin: 0; padding: 0; border: none; }
+            table, .form-row, .legal-doc-block { width: 99%; margin-left: auto; margin-right: auto; }
+            input, select, textarea { border: none !important; border-bottom: 1px dotted #ccc !important; background: transparent !important; padding: 0 !important; margin-bottom: 2px; resize: none; overflow: hidden; min-height: 0; }
+            select { -webkit-appearance: none; appearance: none; }
+            .section, .proxy-card { page-break-inside: avoid; border: none; padding: 0; margin-bottom: 15px; }
+            table { page-break-inside: auto; }
+            tr { page-break-inside: avoid; }
+            
+            /* עיצוב סיכום בהדפסה */
+            #summary-container {
+                display: block !important; 
+                border: none; 
+                padding: 0; 
+                background: none;
+                page-break-before: always; /* תמיד להתחיל דף חדש לסיכום */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="actions">
+        <button class="btn-summary" onclick="generateSummary()">צור סיכום לעריכה</button>
+        <button class="btn-save" onclick="printToPDF()">שמור כ-PDF (הדפסה)</button>
+    </div>
+
+    <div class="container" id="form-content" autocomplete="off">
+        
+        <div id="custom-date-header"></div>
+
+        <h1>ייפוי כוח מתמשך</h1>
+        <h2>משרד האפוטרופוס הכללי והכונס הרשמי</h2>
+        <p style="text-align: center;">שאלון פגישה - מסמך הכנה</p>
+
+        <div class="section">
+            <div class="section-title">1. פרטי הממנה</div>
+            <div class="form-row">
+                <div class="form-group"><label>שם הממנה:</label><input type="text" id="appointerName" placeholder="ישראל ישראלי"></div>
+                <div class="form-group"><label>תעודת זהות:</label><input type="text" id="appointerID" placeholder="123456789"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>טלפון נייד:</label><input type="text"></div>
+                <div class="form-group"><label>דוא"ל:</label><input type="email" dir="ltr" placeholder="email@example.com"></div>
+            </div>
+            <div class="form-group"><label>כתובת מלאה:</label><input type="text"></div>
+            
+            <div class="form-group">
+                <label>קבלת פרטים מהאפוטרופוס:</label>
+                <div>
+                    <input type="checkbox"> דואר אלקטרוני &nbsp;
+                    <input type="checkbox"> לנייד &nbsp;
+                    <input type="checkbox"> דואר ישראל
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>מצב משפחתי:</label>
+                    <select><option value="">בחר...</option><option>נשוי</option><option>רווק</option><option>גרוש</option><option>אלמן</option></select>
+                </div>
+                <div class="form-group"><label>שם בן/בת הזוג:</label><input type="text"></div>
+                <div class="form-group"><label>מתגוררים יחדיו?</label><select><option value="">בחר...</option><option>כן</option><option>לא</option></select></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">2. ילדים</div>
+            <div class="form-group">
+                <label>האם הילדים מאותו בן זוג?</label>
+                <select style="width: 100px;"><option value="">בחר...</option><option>כן</option><option>לא</option></select>
+            </div>
+            
+            <div class="instruction-note">
+                (אם יש ילדים מבני זוג שונים לוודא שאין סכסוכים בכדי למנוע התנגדויות)
+            </div>
+
+            <table id="childrenTable">
+                <thead>
+                    <tr><th>שם</th><th style="width: 70px;">גיל</th><th>מצב משפחתי</th><th>עיסוק</th><th style="width: 130px;">טלפון</th><th>דוא"ל</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="text"></td>
+                        <td><input type="text" style="text-align: center;"></td>
+                        <td><select><option value="">בחר...</option><option>רווק</option><option>נשוי</option><option>גרוש</option><option>אלמן</option></select></td>
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="email" dir="ltr" class="email-input"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button type="button" class="btn-add" onclick="addRow('childrenTable')">+ הוסף ילד</button>
+
+            <div class="form-group" style="margin-top: 15px;">
+                <label>עיסוק הממנה:</label>
+                <input type="text">
+            </div>
+            <div class="instruction-note">
+                (יש לבדוק שהממנה לא בעל עסק בעל חברה ואם כן לתת את הדעת על כך)
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">3. עניינים כלכליים ונכסים</div>
+            <div class="form-group">
+                <label>נכסים ברשותך:</label>
+                <div><input type="checkbox"> דירה <input type="checkbox"> נכסים להשכרה <input type="checkbox"> עסק <input type="checkbox"> רכוש בחו"ל</div>
+            </div>
+            <div class="form-group">
+                <label>הנחיות לגבי מכירת דירה/נכסים:</label>
+                <textarea id="txtAssets" oninput="autoGrow(this)"></textarea>
+                <div class="instruction-note">(לחקור את הממנה על נכסיו ומה ההנחיות שלו לגביהן.)</div>
+            </div>
+            <div class="form-group">
+                <label>הערות והסבר לגבי מכירת דירה:</label>
+                <textarea id="txtSaleNotes" placeholder="פרט כאן..." oninput="autoGrow(this)"></textarea>
+                <div class="instruction-note">(כמובן להזכיר שלא ניתן למכור את הדירה ללא התערבות בימ"ש.)</div>
+            </div>
+
+            <label>חשבונות בנק:</label>
+            <table id="bankTable">
+                <thead><tr><th>שם הבנק</th><th style="width: 60px;">סניף</th><th>מס' חשבון</th><th>סוג חשבון / מיקום</th><th style="width: 50px;">מניות?</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <select>
+                                <option value="">בחר...</option><option>פועלים</option><option>לאומי</option><option>מזרחי</option><option>דיסקונט</option><option>בינלאומי</option><option>יהב</option><option>ירושלים</option><option>מרכנתיל</option><option>מסד</option><option>ONE ZERO</option><option>Citibank</option><option>HSBC</option><option>Barclays</option><option>כל בנק אחר</option>
+                            </select>
+                        </td>
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <td><select><option value="">בחר...</option><option>פרטי</option><option>עסקי</option><option>חברה</option></select></td>
+                        <td style="text-align: center;"><input type="checkbox"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button type="button" class="btn-add" onclick="addRow('bankTable')">+ הוסף חשבון</button>
+            <div class="instruction-note">חשוב לבדוק באיזה בנקים יש לממנה חשבונות... תמיד לרשום "ו/או כל בנק אחר".</div>
+
+            <div class="form-row">
+                <div class="form-group"><label>האם להמשיך השקעות באופן סולידי?</label><select><option value="">בחר...</option><option>כן</option><option>לא</option></select></div>
+                <div class="form-group"><label>לאפשר למיופה הכוח כרטיס אשראי?</label><select><option value="">בחר...</option><option>כן</option><option>לא</option></select></div>
+            </div>
+            
+            <div class="form-group" style="margin-top: 15px;">
+                <label style="color: #2c3e50;">הנחיות פרטניות לניירות ערך ומניות (החזקה/מכירה, תנאים, עיתוי):</label>
+                <textarea id="txtStocks" oninput="autoGrow(this)" placeholder="פרט כאן מתי למכור, באילו תנאים להחזיק וכו'..."></textarea>
+            </div>
+
+            <div class="form-group" style="margin-top: 15px;">
+                <label>הנחיות למתנות/הלוואות/תרומות:</label>
+                <textarea id="txtGifts" oninput="autoGrow(this)"></textarea>
+                <div class="instruction-note">להזכיר שמתנות מעל 100 ש"ח דורשות אישור בימ"ש ללא הוראה מפורשת.</div>
+            </div>
+            <div class="form-group">
+                <label>מידע על חובות/תביעות/פשיטת רגל:</label>
+                <textarea oninput="autoGrow(this)"></textarea>
+                <div class="instruction-note">ככל ויש - לצרף את שם העו"ד שמטפל, לכתב מה ההנחיות של הממנה לאותו מקרה...</div>
+            </div>
+            <div style="margin-top: 20px; background: #fdfefe; padding: 15px; border: 1px dashed #3498db; border-radius: 4px;">
+                <div class="form-row" style="align-items: center;">
+                    <label style="margin-left: 10px; min-width: 300px;">1. יש לך קופות פנסיה ופיצויים בארץ ובחו"ל?</label>
+                    <select style="width: 80px;"><option value="">בחר...</option><option>כן</option><option>לא</option></select>
+                </div>
+                <div class="form-group"><label>קופה המנוהלת אצל חב' (פרט שמות):</label><textarea oninput="autoGrow(this)"></textarea></div>
+                <div class="form-row" style="align-items: center; margin-top: 10px;">
+                    <label style="margin-left: 10px; min-width: 300px;">אתה מאשר למיופה הכוח לפדות/לתבוע?</label>
+                    <select style="width: 80px;"><option value="">בחר...</option><option>כן</option><option>לא</option></select>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">4. זכויות סוציאליות, רכב ומסמכים משפטיים</div>
+            <label>1. זכויות מיוחדות וקצבאות:</label>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px;">
+                <div><input type="checkbox"> זכויות מיוחדות</div><div><input type="checkbox"> קצבאות</div><div><input type="checkbox"> קצבת שארים</div>
+                <div><input type="checkbox"> ילד נכה</div><div><input type="checkbox"> נכות</div>
+                <div style="border-right: 2px solid #ddd; padding-right: 10px;"><strong>מיקום:</strong> <input type="checkbox"> בארץ <input type="checkbox"> בחו"ל</div>
+            </div>
+            <div class="form-group"><label>הנחיות לקופת פנסיה וקצבאות:</label><textarea id="txtPension" oninput="autoGrow(this)"></textarea>
+                <div class="instruction-note">לקבל ממיופה הכוח הנחיות מה לעשות בקופת הפנסיה שלו והאם לפדות אותה ובאיזה תנאים</div>
+            </div>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+            <div class="form-row"><div class="form-group" style="flex:0 0 150px;"><label>2. יש לך רכב?</label><select><option value="">בחר...</option><option>כן</option><option>לא</option></select></div><div class="form-group"><label>אם כן, מה לעשות עם הרכב?</label><input type="text"></div></div>
+            
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0 30px 0;">
+            
+            <h3 style="text-align: right; font-size: 16px; margin-bottom: 15px; color: #2c3e50;">3. מסמכים משפטיים והנחיות קודמות</h3>
+
+            <div class="legal-doc-block">
+                <div class="form-row" style="align-items: flex-end;">
+                    <div class="form-group" style="flex: 0 0 150px;">
+                        <label>האם ערכת צוואה?</label>
+                        <select><option value="">בחר...</option><option>כן</option><option>לא</option></select>
+                    </div>
+                    <div class="form-group"><label>מתי נערכה?</label><input type="date"></div>
+                    <div class="form-group"><label>היכן הופקדה?</label><input type="text"></div>
+                    <div class="form-group"><label>הוראות קבורה?</label><select><option value="">בחר...</option><option>כן</option><option>לא</option></select></div>
+                </div>
+                <div class="form-group">
+                    <label>הערות והסברים נוספים בנושא צוואה:</label>
+                    <textarea id="txtWill" oninput="autoGrow(this)" placeholder="הערות לגבי הצוואה..."></textarea>
+                    <div class="instruction-note">לוודא שאין סכסוכים, הדרה של ילד או השפעה בלתי הוגנת.</div>
+                </div>
+            </div>
+
+            <div class="legal-doc-block">
+                <div class="form-row" style="align-items: flex-end;">
+                    <div class="form-group" style="flex: 0 0 150px;">
+                        <label>האם ערכת הסכם ממון?</label>
+                        <select><option value="">בחר...</option><option>כן</option><option>לא</option></select>
+                    </div>
+                    <div class="form-group"><label>מתי נערך?</label><input type="date"></div>
+                    <div class="form-group"><label>היכן הופקד?</label><input type="text"></div>
+                </div>
+                <div class="form-group">
+                    <label>הערות והסברים נוספים בנושא הסכם ממון:</label>
+                    <textarea oninput="autoGrow(this)" placeholder="הערות לגבי הסכם ממון..."></textarea>
+                </div>
+            </div>
+
+            <div class="legal-doc-block">
+                <div class="form-row" style="align-items: flex-end;">
+                    <div class="form-group" style="flex: 0 0 150px;">
+                        <label>ערכת ייפוי כוח רפואי?</label>
+                        <select><option value="">בחר...</option><option>כן</option><option>לא</option></select>
+                    </div>
+                    <div class="form-group"><label>מתי נערך?</label><input type="date"></div>
+                    <div class="form-group"><label>היכן הופקד?</label><input type="text"></div>
+                </div>
+                <div class="form-group">
+                    <label>הערות והסברים נוספים בנושא ייפוי כוח רפואי:</label>
+                    <textarea id="txtMedicalPower" oninput="autoGrow(this)" placeholder="הערות לגבי ייפוי כוח רפואי..."></textarea>
+                    <div class="instruction-note">להסביר את המשמעות של הייפוי כוח הרפואי.</div>
+                </div>
+            </div>
+
+            <div class="legal-doc-block">
+                <div class="form-row" style="align-items: flex-end;">
+                    <div class="form-group" style="flex: 0 0 150px;">
+                        <label>ערכת בעבר ייפוי כוח מתמשך?</label>
+                        <select><option value="">בחר...</option><option>כן</option><option>לא</option></select>
+                    </div>
+                    <div class="form-group"><label>מתי נערך?</label><input type="date"></div>
+                    <div class="form-group"><label>היכן הופקד?</label><input type="text"></div>
+                </div>
+                <div class="form-group">
+                    <label>הערות והסברים נוספים בנושא ייפוי כוח מתמשך קודם:</label>
+                    <textarea oninput="autoGrow(this)" placeholder="הערות לגבי ייפוי כוח מתמשך קודם..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">5. עניינים אישיים</div>
+            <div class="instruction-note">הממנה לא תמיד יודע להסביר על הוראות ועניינים אישים - השאלות המנחות חשובות כאן.</div>
+            <div class="form-group"><label>מתי יחשב המצב כ"אי כשירות"?</label><textarea id="txtIncapacity" placeholder="הנחיות לעניין קביעת אי כשירות" oninput="autoGrow(this)"></textarea></div>
+            <div class="form-group"><label>הרגלים חשובים וסדר יום:</label><textarea oninput="autoGrow(this)"></textarea></div>
+            
+            <div class="form-group"><label>העדפות מזון:</label><textarea id="txtFood" oninput="autoGrow(this)" placeholder="רגישות למזון מסויים, צמחוני / טבעוני / בשרי , תוספי מזון, תרופות מיוחדות."></textarea></div>
+            
+            <div class="form-group"><label>העדפות למגורים וטיפול:</label><textarea id="txtLiving" oninput="autoGrow(this)" placeholder="בית אבות / בית"></textarea></div>
+            
+            <div class="form-group" style="margin-top: 15px;"><label>האם יש לך רכוש מיוחד?</label><input type="text" placeholder="חפצי אומנות , תכשיטים ..."></div>
+            
+            <div class="form-group"><label>הנחיות מיוחדות לטיפול ברכוש זה:</label><textarea id="txtSpecialProp" oninput="autoGrow(this)"></textarea></div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">6. עניינים רפואיים</div>
+            <div class="form-row"><div class="form-group"><label>קופת חולים:</label><input type="text"></div><div class="form-group"><label>רופא מטפל:</label><input type="text"></div></div>
+            
+            <div class="form-group" style="margin-top: 15px;"><label>שיטות רפואיות מיוחדות:</label><textarea id="txtMedMethods" oninput="autoGrow(this)" placeholder="טיפולים מיוחדים כמו רפואה סינית, מגע ותנועה, נטורופתיה וטבע, טיפול פליאטיבי וכו'..."></textarea></div>
+            
+            <label style="margin-top: 20px;">הסכמה לטיפולים רפואיים:</label>
+            <table>
+                <thead><tr><th>טיפול</th><th style="width: 80px; text-align: center;">מסכים</th><th style="width: 80px; text-align: center;">לא מסכים</th></tr></thead>
+                <tbody>
+                    <tr><td>א. מאריכי חיים</td><td align="center"><input type="radio" name="m1" value="y"></td><td align="center"><input type="radio" name="m1" value="n"></td></tr>
+                    <tr><td>ב. החייאה</td><td align="center"><input type="radio" name="m2" value="y"></td><td align="center"><input type="radio" name="m2" value="n"></td></tr>
+                    <tr><td>ג. תרופות/הלם חשמלי</td><td align="center"><input type="radio" name="m3" value="y"></td><td align="center"><input type="radio" name="m3" value="n"></td></tr>
+                    <tr><td>ד. ניתוחים</td><td align="center"><input type="radio" name="m4" value="y"></td><td align="center"><input type="radio" name="m4" value="n"></td></tr>
+                    <tr><td>ה. כימותרפיה/הקרנות</td><td align="center"><input type="radio" name="m5" value="y"></td><td align="center"><input type="radio" name="m5" value="n"></td></tr>
+                    <tr><td>ו. בדיקות דם</td><td align="center"><input type="radio" name="m6" value="y"></td><td align="center"><input type="radio" name="m6" value="n"></td></tr>
+                    <tr><td>ז. צילומים</td><td align="center"><input type="radio" name="m7" value="y"></td><td align="center"><input type="radio" name="m7" value="n"></td></tr>
+                    <tr><td>ח. בדיקות אבחנתיות</td><td align="center"><input type="radio" name="m8" value="y"></td><td align="center"><input type="radio" name="m8" value="n"></td></tr>
+                    <tr><td>ט. טיפול תרופתי</td><td align="center"><input type="radio" name="m9" value="y"></td><td align="center"><input type="radio" name="m9" value="n"></td></tr>
+                    <tr><td>י. דיאליזה</td><td align="center"><input type="radio" name="m10" value="y"></td><td align="center"><input type="radio" name="m10" value="n"></td></tr>
+                    <tr><td>יא. אשפוז</td><td align="center"><input type="radio" name="m11" value="y"></td><td align="center"><input type="radio" name="m11" value="n"></td></tr>
+                    <tr><td>יב. מידע רפואי</td><td align="center"><input type="radio" name="m12" value="y"></td><td align="center"><input type="radio" name="m12" value="n"></td></tr>
+                </tbody>
+            </table>
+            <div style="margin-top: 15px; padding: 10px; border: 1px solid #ccc; background: #fafafa;">
+                <strong>יג. יש לך מחלות נפשיות? נוטל כדורים פסיכיאטריים?</strong>
+                <input type="radio" name="psych" value="y"> כן <input type="radio" name="psych" value="n"> לא <input type="text" placeholder="פרט..." style="margin-top: 5px;">
+            </div>
+            <div class="instruction-note">כאן המקום להסביר כי הייפוי כוח מתמשך איננו מחליף את הייפוי כוח הרפואי.</div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">7. מיופי הכוח</div>
+            <div class="instruction-note">כמה שיותר מיופה כוח כך זה יקשה... עדיף למנות אחד או אחד לכל תחום.</div>
+            
+            <div class="instruction-note">להסביר לממנה שהוא יכול למנות מיודע אשר יקבל דיווחים מהאפוטרופוס לעניינים שיחליט הממנה, וכך יהיה איזשהו פיקוח על מיופה הכוח.</div>
+            
+            <div class="form-group" style="margin-bottom: 20px; background: #fdfefe; padding: 15px; border: 1px solid #e0e0e0; border-radius: 4px;">
+                <label style="color: #2c3e50; margin-bottom: 10px; font-size: 15px;">אני מבקש ליידע את האדם הבא לקבלת עדכונים / דיווחים מהאפוטרופוס הכללי:</label>
+                <div class="form-row">
+                    <div class="form-group"><input type="text" placeholder="שם מלא"></div>
+                    <div class="form-group"><input type="text" placeholder="ת.ז"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><input type="text" placeholder="טלפון נייד"></div>
+                    <div class="form-group"><input type="email" dir="ltr" placeholder='דוא"ל (email)'></div>
+                </div>
+            </div>
+
+            <div class="instruction-note">לוודא שמיופה הכוח לא הוכרז כפושט רגל ו/או לקוח מוגבל בבנק ואינו נותן שירותים בתשלום לממנה. (לא קשור לתשלום למיופה הכוח לאחר הפעלת הייפוי כוח).</div>
+
+            <div id="proxiesContainer">
+                <div class="proxy-card">
+                    <div style="font-weight: bold; border-bottom: 1px dashed #ccc; padding-bottom: 5px; margin-bottom: 10px;">פרטי מיופה כוח</div>
+                    <div class="form-row"><div class="form-group"><label>שם:</label><input type="text"></div><div class="form-group"><label>ת.ז:</label><input type="text"></div></div>
+                    <div class="form-row"><div class="form-group"><label>טלפון:</label><input type="text"></div><div class="form-group"><label>קירבה:</label><input type="text"></div></div>
+                    <div class="form-group"><label>דוא"ל:</label><input type="email" dir="ltr" class="email-input"></div>
+                    <div class="form-group" style="margin-top: 10px; background: #eef2f7; padding: 10px; border-radius: 4px;">
+                        <label>קבלת דיווח:</label> <div><input type="checkbox"> לנייד <input type="checkbox"> דוא"ל <input type="checkbox"> דואר ישראל</div>
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;"><label>מיופה הכח ביחד עם/מחליף את:</label><input type="text"></div>
+                    <div style="margin-top: 10px;"><strong>בתחומים:</strong> <input type="checkbox"> כלכלי <input type="checkbox"> רפואי <input type="checkbox"> אישי</div>
+                </div>
+            </div>
+            <button type="button" class="btn-add" onclick="addProxy()">+ הוסף מיופה כוח</button>
+            <div class="form-group" style="margin-top: 20px;"><label>מנגנון הכרעה במקרה של מחלוקת:</label><input type="text" placeholder="שם האדם המכריע"></div>
+            <div class="form-group"><label>שכר למיופה הכוח (אם קיים):</label><input type="text" placeholder="סכום בש''ח"></div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">8. הנחיות מקדימות והצהרות</div>
+            <p style="font-size: 13px; line-height: 1.6; background-color: #f8f9fa; padding: 10px;">
+                <strong>הצהרות ברירת מחדל:</strong><br>
+                1. אני מורה כי לצורך כניסה לתוקף די בחוות דעת רופא משפחה.<br>
+                2. אני מבקש שהכניסה לתוקף תהיה גם בעת תשישות הגוף.<br>
+                3. אני מבקש למנוע ממני סבל גופני מיותר גם אם הטיפול יוביל להארכת חיים.<br>
+                4. אם אין סיכוי להבראה, אבקש לא לטפל בי.
+            </p>
+            <div class="form-group"><label>הערות נוספות והתאמות אישיות להצהרות אלו:</label><textarea id="txtGeneralNotes" oninput="autoGrow(this)"></textarea></div>
+        </div>
+
+        <div id="summary-container">
+            <div class="section-title" style="border-bottom-color: #2980b9; color: #2980b9;">סיכום הנחיות, בקשות והוראות</div>
+            <p style="font-size:13px; color:#666;">(אזור זה ניתן לעריכה חופשית ויודפס כחלק מהמסמך)</p>
+            <textarea id="summary-textarea" oninput="autoGrow(this)"></textarea>
+        </div>
+
+        <div class="section" style="margin-top: 30px;">
+            <div class="section-title">9. חתימה</div>
+            <p>אני מאשר שכל האמור לעיל הוסבר לי, וכי אני חותם מרצוני החופשי.</p>
+            <div class="form-row"><div class="form-group"><label>תאריך:</label><input type="date" id="signDate"></div></div>
+            <label>חתימת הממנה:</label>
+            <canvas id="signature-pad" class="signature-pad" width="600" height="150"></canvas>
+            <button type="button" class="btn-clear" onclick="clearSig()" style="margin-top: 5px;">נקה חתימה</button>
+        </div>
+
+        <div class="example-note">
+            <h4>דוגמה להנחיות מקדימות למיופה כח</h4>
+            <p><strong>הנחיות מקדימות למיופה הכוח</strong><br>
+            אני מורה כי לצורך כניסה לתוקף של יפויי הכוח המתמשך די בחוות דעת מאת רופא משפחה או כל רופא שיקבע כי "אינני מבינה דבר" ואין בהכרח בחוות דעת פסיכיאטר או נוירולוג כפי שמורה חוק השרות המשפטית והאפוטרופוס.<br>
+            אני מבקש שהכניסה לתוקף של יפויי הכוח תהיה גם בעת תשישות הגוף ולא רק תשישות הנפש והשכל, כלומר שאם אתקשה בפעולות גם אם אהיה כשיר משפטית, ויכתוב רופא משפחה כי יש להכניס לתוקף את יפויי הכוח המתמשך, הוא יכנס לתוקף.</p>
+
+            <p><strong>הנחיות מקדימות למיופה הכוח בתחום הכלכלי</strong><br>
+            מיופה הכוח יוכל להוציא כרטיס אשראי מחשבון הבנק שבבעלותי המצוי ב________, יוכל מיופה הכוח להעניק מתנות לקרובי משפחה בתאם לחוק עד 100 ₪. להמשיך להשקיע את כספי המצוי בחשבון הבנק בתאם להשקעות כיום, לשלם מחשבון הבנק שבבעלותי עבור הוצאות שוטפות כל הבית כולל חשבונות מים חשמל וגז ולשלם על העסקת מטפלת במידה ואדרש לכך.<br>
+            במידה ואוכל ללכת למועדונים אבקש להשאיר את הרכב שברשותי.</p>
+
+            <p><strong>ברצוני לתת הנחיות מקדימות למיופה הכוח כדלקמן:</strong><br>
+            בעניינים הרפואיים כמפורט להלן, אני מיפה את כוחו של מיופה כוחי לחתום בשמי (וגם שלא לחתום), ולהסכים (וגם שלא להסכים), הכל על פי שיקול דעתו של מיופה כוחי, לכל עניין רפואי שלגביו רופא (או מוסד רפואי) ידרוש לקבל את הסכמתי לפי חוק זכויות החולה- לגבי טיפול שיינתן לי או שלא יינתן לי. אני מיפה בזאת את כוחו של מיופה כוחי בעניינים הרפואיים שלי לפעול מול צוות הרפואי ולהחליט לפי שיקול דעתו כדלקמן:</p>
+
+            <p>אני מבקש, ככל שהדבר אפשרי וחוקי, למנוע ממני סבל גופני מיותר גם אם הטיפול שיוצע לי יוביל להארכה מסוימת של חיי. אם אין סיכוי ממשי להבראה או לחזרה לשגרת חיים נורמלית סבירה ואנושית אבקש לא לטפל בי. לעניין זה, "שגרת חיים איננה סבירה ואיננה אנושית": משמע הזדקקות להזנה אמצעים מלאכותיים או במצב בו אהיה משותק בארבע גפיים, מצב של שיטיון או מצב של כאבים בלתי סבירים.</p>
+
+            <p>במצבים אלו אני מבקש לא לבצע בי החייאה לא להתחיל לתת לי הזנה ואם התחילו אני מבקש להפסיקה, לא לחבר אותי למכונת הנשמה ואם חוברתי אני מבקש/ת לנתקה, אם אדרש לטיפול כימותרפי או הקרנות מבקש לא לקבלם. אם בעקבות מצבי הרפואי אדרש לדיאליזה אבקש לא לבצעה, אם מצבי הרפואי הינו מצב של סבל, אני מבקש לקבל טיפול במורפיום או משככי כאבים אחרים שימנעו ממני את המשך הסבל.</p>
+
+            <p>הוסבר לי כי יפויי הכוח המתמשך חל על עניינים שחוק זכויות החולה אינם חלים עליהם.<br>
+            ברצוני להמשיך לקבל טיפול רפואי מרופא המשפחה _____ בקופת החולים _________</p>
+
+            <p><strong>הנחיות מקדימות למיופה כוח בתחום האישי:</strong><br>
+            ברצוני להמשיך להתגורר בביתי, במידה ואדרש לעזרה של מטפל זר אעדיף מטפלת אישה, ואם אוכל ללכת למועדונים שלהם אני הולכת בדרך כלל, מבקשת להמשיך ללכת אליהם.</p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('signDate').valueAsDate = new Date();
+
+        // 1. הגדלה אוטומטית של שדות טקסט
+        function autoGrow(element) {
+            element.style.height = 'auto';
+            element.style.height = (element.scrollHeight) + 'px';
+        }
+
+        // 2. פונקציה כללית לביטול השלמה אוטומטית והגבלת שפה במייל
+        function setupInputRestrictions() {
+            const allInputs = document.querySelectorAll('input, textarea, select');
+            allInputs.forEach(el => { el.setAttribute('autocomplete', 'off'); });
+
+            const emailInputs = document.querySelectorAll('input[type="email"]');
+            emailInputs.forEach(input => {
+                input.setAttribute('autocomplete', 'off');
+                input.addEventListener('input', function(e) {
+                    const hebrewRegex = /[\u0590-\u05FF]/g;
+                    if (hebrewRegex.test(this.value)) {
+                        this.value = this.value.replace(hebrewRegex, '');
+                    }
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var textareas = document.querySelectorAll('textarea');
+            textareas.forEach(el => autoGrow(el));
+            setupInputRestrictions();
+        });
+
+        function addRow(tableId) {
+            const table = document.getElementById(tableId);
+            const tbody = table.querySelector('tbody');
+            const row = tbody.rows[0].cloneNode(true);
+            const inputs = row.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                if(input.type === 'checkbox') input.checked = false;
+                else input.value = '';
+                if(input.tagName === 'SELECT') input.selectedIndex = 0;
+            });
+            tbody.appendChild(row);
+            setupInputRestrictions();
+        }
+
+        function addProxy() {
+            const container = document.getElementById('proxiesContainer');
+            const newCard = container.querySelector('.proxy-card').cloneNode(true);
+            const inputs = newCard.querySelectorAll('input');
+            inputs.forEach(input => {
+                if(input.type === 'checkbox' || input.type === 'radio') input.checked = false;
+                else input.value = '';
+            });
+            container.appendChild(newCard);
+            setupInputRestrictions();
+        }
+
+        // === פונקציית יצירת סיכום ===
+        function generateSummary() {
+            let name = document.getElementById('appointerName').value || 'הממנה';
+            let summary = `סיכום הנחיות ובקשות עבור ${name}:\n\n`;
+
+            // פונקציית עזר להוספת שדה אם הוא מלא
+            function addField(id, title) {
+                let val = document.getElementById(id).value;
+                if (val && val.trim() !== "") {
+                    summary += `--- ${title} ---\n${val}\n\n`;
+                }
+            }
+
+            addField('txtAssets', 'הנחיות לגבי מכירת דירה/נכסים');
+            addField('txtSaleNotes', 'הערות לגבי מכירת דירה');
+            addField('txtStocks', 'הנחיות לגבי ניירות ערך ומניות');
+            addField('txtGifts', 'הנחיות למתנות ותרומות');
+            addField('txtPension', 'הנחיות לקופות פנסיה וקצבאות');
+            addField('txtWill', 'הערות בנושא צוואה');
+            addField('txtMedicalPower', 'הערות בנושא ייפוי כוח רפואי');
+            addField('txtIncapacity', 'הגדרת אי-כשירות');
+            addField('txtFood', 'העדפות מזון');
+            addField('txtLiving', 'העדפות מגורים וטיפול');
+            addField('txtSpecialProp', 'טיפול ברכוש מיוחד');
+            addField('txtMedMethods', 'שיטות רפואיות מיוחדות');
+            addField('txtGeneralNotes', 'הערות והתאמות כלליות');
+
+            // הצגת הסיכום בתיבה
+            let summaryBox = document.getElementById('summary-textarea');
+            let container = document.getElementById('summary-container');
+            
+            if (summary === `סיכום הנחיות ובקשות עבור ${name}:\n\n`) {
+                summary += "לא הוזנו נתונים בשדות המלל החופשי.";
+            }
+
+            summaryBox.value = summary;
+            container.style.display = 'block'; // הצגת התיבה
+            autoGrow(summaryBox);
+            
+            // גלילה לאזור הסיכום
+            container.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        var canvas = document.getElementById('signature-pad');
+        var ctx = canvas.getContext('2d');
+        var isDrawing = false;
+
+        ['mousedown', 'touchstart'].forEach(evt => 
+            canvas.addEventListener(evt, e => {
+                if(evt === 'touchstart') e.preventDefault();
+                isDrawing = true; ctx.beginPath();
+                const pos = getPos(e); ctx.moveTo(pos.x, pos.y);
+            })
+        );
+
+        ['mousemove', 'touchmove'].forEach(evt => 
+            canvas.addEventListener(evt, e => {
+                if(evt === 'touchmove') e.preventDefault();
+                if(!isDrawing) return;
+                const pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke();
+            })
+        );
+
+        ['mouseup', 'touchend'].forEach(evt => canvas.addEventListener(evt, () => isDrawing = false));
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const cx = e.touches ? e.touches[0].clientX : e.clientX;
+            const cy = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: cx - rect.left, y: cy - rect.top };
+        }
+
+        function clearSig() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+        function printToPDF() {
+            const now = new Date();
+            const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getFullYear()).slice(-2)} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            document.getElementById('custom-date-header').textContent = dateStr;
+
+            var name = document.getElementById('appointerName').value || 'פלוני';
+            var id = document.getElementById('appointerID').value || '000000000';
+            var safeName = name.replace(/[^א-תa-z0-9]/gi, '_');
+            
+            var originalTitle = document.title;
+            document.title = safeName + "_" + id + "_ייפוי-כוח"; 
+
+            var textareas = document.querySelectorAll('textarea');
+            textareas.forEach(el => { autoGrow(el); });
+
+            window.print();
+            setTimeout(() => { document.title = originalTitle; }, 1000);
+        }
+    </script>
+</body>
+</html>
